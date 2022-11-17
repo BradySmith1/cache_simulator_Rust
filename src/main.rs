@@ -1,19 +1,30 @@
 mod cache;
-
 use std::fs;
 use std::env;
 use std::process::exit;
 use crate::cache::Cache;
 
-fn cache() {
-    let input_string: Vec<String> = read_input_file();
+fn run() {
+    let mut instruction_sets: Vec<String> = read_input_file();
     let mut config_nums: Vec<i32> = vec![];
-    for i in 0..3{
-        config_nums.push(check_numbers(&input_string[i]));
+    for _ in 0..3{
+        config_nums.push(check_numbers(&instruction_sets[0]));
+        instruction_sets.remove(0);
     }
     check_config(&config_nums);
-    let new_cache: Cache = Cache::new(config_nums[0], config_nums[1], config_nums[2]);
+    let mut cache: Cache = Cache::new(config_nums[0], config_nums[1], config_nums[2]);
+    cache.init_log();
+    println!("{}", cache.log_access);
+    for i in instruction_sets{
+        let instructions: Vec<String> = split_instruction(i);
+        cache.access(&instructions[0],  instructions[1].parse::<i32>().unwrap(), i32::from_str_radix(&instructions[2], 16).unwrap());
+    }
+}
 
+fn split_instruction(instruction: String) -> Vec<String>{
+    let new_instruction: Vec<&str> = instruction.split_terminator(":").collect();
+    let new_instruction: Vec<String> = new_instruction.iter().map(|x| x.to_string()).collect();
+    return new_instruction;
 }
 
 fn read_input_file() -> Vec<String> {
@@ -28,7 +39,7 @@ fn read_input_file() -> Vec<String> {
 }
 
 fn check_numbers(set_num: &String) -> i32{
-    let mut returnable: i32 = 0;
+    let returnable: i32;
     match set_num.parse::<i32>() {
         Ok(num) => {
             returnable = num;
@@ -61,5 +72,5 @@ fn check_config(numbers: &Vec<i32>){
 }
 
 pub fn main() {
-    cache();
+    run();
 }
