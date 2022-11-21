@@ -17,7 +17,7 @@ fn run() {
     println!("{}", cache.log_access);
     for i in instruction_sets{
         let instructions: Vec<String> = split_instruction(i);
-        cache.access(&instructions[0],  instructions[1].parse::<i32>().unwrap(), i32::from_str_radix(&instructions[2], 16).unwrap());
+        cache.access(&instructions[0],  &instructions[1], &instructions[2]);
     }
 }
 

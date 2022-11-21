@@ -30,7 +30,9 @@ impl Cache{
         ------ -------- ------- ----- ------ ------ -------").expect("Failure writing to string");
     }
 
-    pub fn access(&self, instruction_type: &String, size: i32, mem_address: i32){
+    pub fn access(&self, instruction_type: &String, size: &String, mem_address: &String){
+        let mut mem_address = hex_to_binary(mem_address);
+        //need to write a function to split up the mem address into tag, index, and offset based on the config
         if instruction_type.to_lowercase() == "read"{
             read_cache();
         }else{
@@ -45,6 +47,32 @@ impl Cache{
     }
     pub fn to_string(&self) -> String {
         let mut returns: String = String::new();
+        returns
+    }
+    fn hex_to_binary(string: &String) -> String {
+        let mut returns: String = String::new();
+        for char in string.chars(){
+            let char= match char{
+                '0' => "0000",
+                '1' => "0001",
+                '2' => "0010",
+                '3' => "0011",
+                '4' => "0100",
+                '5' => "0101",
+                '6' => "0110",
+                '7' => "0111",
+                '8' => "1000",
+                '9' => "1001",
+                'a' => "1010",
+                'b' => "1011",
+                'c' => "1100",
+                'd' => "1101",
+                'e' => "1110",
+                'f' => "1111",
+                _ => "0000",
+            };
+            write!(&mut returns, "{}", char.to_string()).expect("Failure writing to string");
+        }
         returns
     }
 }
