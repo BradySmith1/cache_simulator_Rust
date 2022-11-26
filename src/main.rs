@@ -1,3 +1,5 @@
+extern crate core;
+
 mod cache;
 use std::fs;
 use std::env;
@@ -13,12 +15,11 @@ fn run() {
     }
     check_config(&config_nums);
     let mut cache: Cache = Cache::new(config_nums[0], config_nums[1], config_nums[2]);
-    cache.init_log();
-    println!("{}", cache.log_access);
     for i in instruction_sets{
         let instructions: Vec<String> = split_instruction(i);
         cache.access(&instructions[0],  &instructions[1], &instructions[2]);
     }
+    println!("{}", cache.to_string());
 }
 
 fn split_instruction(instruction: String) -> Vec<String>{
