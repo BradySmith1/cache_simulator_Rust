@@ -52,7 +52,13 @@ impl Cache{
                             continue;
                         }else{
                             mem_reference += 1;
-                            self.mem_to_cache(cache_num - (searches as usize), &cache_details, mem_address, mem_reference);
+                            let mut beginning_cache = cache_num - (searches as usize);
+                            for num in beginning_cache..cache_num{
+                                if num + 1 <= cache_num{
+                                    self.cache_blocks[num + 1] = self.cache_blocks[num].clone();
+                                }
+                            }
+                            self.mem_to_cache(beginning_cache, &cache_details, mem_address, mem_reference);
                             cache_num += 1;
                             return;
                         }
@@ -168,7 +174,7 @@ fn init_cache(set_num: i32, set_size: i32, line_size: i32) -> Vec<Vec<i32>>{ //r
     for _ in 0..set_num{
         for _ in 0..set_size{
             let mut temp = vec![];
-            for int in 0..line_size{
+            for int in 0..line_size + 3{
                 if int == 0{
                     temp.push(index);
                 }else{

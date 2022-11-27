@@ -1,6 +1,8 @@
 extern crate core;
 
 mod cache;
+mod cache_block;
+
 use std::fs;
 use std::env;
 use std::process::exit;
