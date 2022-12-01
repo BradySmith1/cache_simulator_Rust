@@ -1,7 +1,6 @@
 extern crate core;
 
 mod cache;
-mod cache_block;
 
 use std::fs;
 use std::env;
@@ -32,8 +31,19 @@ fn split_instruction(instruction: String) -> Vec<String>{
 
 fn read_input_file() -> Vec<String> {
     let arguments: Vec<String> = env::args().collect();
+    if arguments.len() != 3 {
+        println!("Usage: cargo run -- -f <input_file>");
+        exit(1);
+    }
     let path: String = arguments.get(2).unwrap().to_string();
-    let file_contents = fs::read_to_string(&path).expect("Input file invalid.");
+    let file_contents = fs::read_to_string(&path);
+    let file_contents = match file_contents {
+        Ok(file_contents) => file_contents,
+        Err(_) => {
+            println!("Error: File not found");
+            exit(1);
+        }
+    };
     let mut input_strings: Vec<String> = file_contents.lines().map(String::from).collect();
     for i in 0..3{
         input_strings[i] = input_strings[i].chars().last().unwrap().to_string();
