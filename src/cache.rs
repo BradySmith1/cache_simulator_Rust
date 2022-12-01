@@ -1,4 +1,5 @@
 use std::fmt::Write;
+use std::process::exit;
 
 pub struct Cache {
     set_num: i32,
@@ -20,61 +21,120 @@ impl Cache{
     }
 
     pub fn access(&mut self, instruction_type: &String, size: &String, mem_address: &String){
-        let mut mem_reference: i32 = 0;
         if check_request(size, hex_to_decimal(mem_address)) == false{
             return;
         }
         let cache_details_str = self.split_address(hex_to_binary(mem_address));
         let cache_details = binary_to_decimal(cache_details_str);
         if instruction_type.to_lowercase().eq("read"){
-            let mut searches = 0;
-            let mut cache_num = 0;
-            while cache_num < self.cache_blocks.len(){
-                //finds the correct index in the cache
-                if self.cache_blocks[cache_num][0] == cache_details[1]{
-                    //checks if the index has been used already, if not it populates it
-                    if self.cache_blocks[cache_num][self.cache_blocks[cache_num].len() - 1] == 0{
-                        mem_reference += 1;
-                        self.mem_to_cache(cache_num, &cache_details, mem_address, mem_reference);
-                        return;
-                    }else{
-                        //check if address is already in cache
-                        if self.cache_blocks[cache_num][(cache_details[2] + 2) as usize] == 1 && self.cache_blocks[cache_num][1] == cache_details[0]{
-                            write!(self.log_access, "read\t\t{}\t\t{}\t{}\t{}\thit\t\t{}\n\t",
-                                   mem_address, cache_details[0 as usize], cache_details[1 as usize],
-                                   cache_details[2 as usize], mem_reference.to_string())
-                                .expect("Failure writing to string");
-                            return;
-                        }else if self.set_size - 1 > searches{
-                            //if the index is not in the cache, it checks the next index
-                            searches += 1;
-                            cache_num += 1;
-                            continue;
-                        }else{
-                            mem_reference += 1;
-                            let mut beginning_cache = cache_num - (searches as usize);
-                            for num in beginning_cache..cache_num{
-                                if num + 1 <= cache_num{
-                                    self.cache_blocks[num + 1] = self.cache_blocks[num].clone();
-                                }
-                            }
-                            self.mem_to_cache(beginning_cache, &cache_details, mem_address, mem_reference);
-                            cache_num += 1;
-                            return;
-                        }
-                    }
+            //read code goes here.
+            self.read_cache(&cache_details, mem_address);
+        }else if instruction_type.to_lowercase().eq("write") {
+            //write-back code goes here.
+            self.write_cache(&cache_details, mem_address);
+        }else{
+            println!("Invalid instruction type {}", instruction_type);
+            exit(1);
+        }
+    }
+
+    fn read_cache(&mut self, cache_details: &Vec<i32>, mem_address: &String) -> i32 {
+        let mut mem_reference: i32 = 0;
+        let mut searches = 0;
+        let mut cache_num = 0;
+        while cache_num < self.cache_blocks.len(){
+            //finds the correct index in the cache
+            if self.cache_blocks[cache_num][0] == cache_details[1]{
+                //checks if the index has been used already, if not it populates it
+                if self.cache_blocks[cache_num][self.cache_blocks[cache_num].len() - 1] == 0{
+                    mem_reference += 1;
+                    self.mem_to_cache(cache_num, cache_details, mem_address, mem_reference);
+                    return mem_reference;
                 }else{
-                    cache_num += 1;
+                    //check if address is already in cache
+                    if self.cache_blocks[cache_num][(cache_details[2] + 3) as usize] == 1 && self.cache_blocks[cache_num][1] == cache_details[0]{
+                        write!(self.log_access, "read\t\t{}\t\t{}\t{}\t{}\thit\t\t{}\n\t",
+                               mem_address, cache_details[0 as usize], cache_details[1 as usize],
+                               cache_details[2 as usize], mem_reference.to_string())
+                            .expect("Failure writing to string");
+                        return mem_reference;
+                    }else if self.set_size - 1 > searches{
+                        //if the index is not in the cache, it checks the next index
+                        searches += 1;
+                        cache_num += 1;
+                        continue;
+                    }else{
+                        mem_reference += 1;
+                        let mut beginning_cache = cache_num - (searches as usize);
+                        for num in beginning_cache..cache_num{
+                            if num + 1 <= cache_num{
+                                self.cache_blocks[num + 1] = self.cache_blocks[num].clone();
+                            }
+                        }
+                        self.mem_to_cache(beginning_cache, &cache_details, mem_address
+                                          , mem_reference);
+                        cache_num += 1;
+                        return mem_reference;
+                    }
+                }
+            }else{
+                cache_num += 1;
+            }
+        }
+        return mem_reference;
+    }
+
+    fn write_cache(&mut self, cache_details: &Vec<i32>, mem_address: &String){
+        let mut mem_reference: i32 = 0;
+        let mut searches = 0;
+        let mut cache_num = 0;
+        while cache_num < self.cache_blocks.len(){
+            //finds the correct index in the cache
+            if self.cache_blocks[cache_num][0] == cache_details[1]{
+                //write is a hit and rewrites the cache
+                let hit = "hit".to_string();
+                if self.cache_blocks[cache_num][1] == cache_details[0]{
+                    self.write_back_cache(cache_num, cache_details, mem_address, mem_reference, hit);
+                }else{
+                    if self.set_size - 1 > searches {
+                        //if the index is not in the cache, it checks the next index
+                        searches += 1;
+                        cache_num += 1;
+                        continue;
+                    }else{
+                        //write miss
+                        let miss = "miss".to_string();
+                        mem_reference = self.write_allocate_cache(cache_num, searches, cache_details);
+                        self.write_back_cache(cache_num, &cache_details, mem_address, mem_reference, miss);
+                        return;
+                    }
                 }
             }
-        }else{
-            //write code goes here.
         }
+    }
+
+    fn write_allocate_cache(&mut self, cache_num: usize, searches: i32, cache_details: &Vec<i32>) -> i32{
+        let mut mem_reference = 1;
+        //checks for dirty bit, if 1 then it has to write it back to memory before replacing
+        if self.cache_blocks[cache_num][2] == 1{
+            mem_reference += 1;
+        }
+        let mut beginning_cache = cache_num - (searches as usize);
+        for num in beginning_cache..cache_num{
+            if num + 1 <= cache_num{
+                self.cache_blocks[num + 1] = self.cache_blocks[num].clone();
+            }
+        }
+        self.cache_blocks[beginning_cache][1] = cache_details[0];
+        for offset in 3..self.cache_blocks[beginning_cache].len(){
+            self.cache_blocks[beginning_cache][offset] = 1;
+        }
+        return mem_reference;
     }
 
     fn mem_to_cache(&mut self, cache_num: usize, cache_details: &Vec<i32>, mem_address: &String, mem_reference: i32){
         self.cache_blocks[cache_num][1] = cache_details[0];
-        for offset in 2..self.cache_blocks[cache_num].len(){
+        for offset in 3..self.cache_blocks[cache_num].len(){
             self.cache_blocks[cache_num][offset] = 1;
         }
         write!(self.log_access, "read\t\t{}\t\t{}\t{}\t{}\tmiss\t\t{}\n\t",
@@ -84,6 +144,16 @@ impl Cache{
         return;
     }
 
+    fn write_back_cache(&mut self, cache_num: usize, cache_details: &Vec<i32>, mem_address: &String, mem_reference: i32, hit_miss: String){
+        for offset in 2..self.cache_blocks[cache_num].len(){
+            self.cache_blocks[cache_num][offset] = 1;
+        }
+        write!(self.log_access, "write\t\t{}\t\t{}\t{}\t{}\t{}\t\t{}\n\t",
+               mem_address, cache_details[0 as usize], cache_details[1 as usize],
+               cache_details[2 as usize], hit_miss, mem_reference.to_string())
+            .expect("Failure writing to string");
+        return;
+    }
 
     fn split_address(&self, address: String) -> Vec<String>{
         let address = address.chars().rev().collect::<String>();
@@ -174,7 +244,7 @@ fn init_cache(set_num: i32, set_size: i32, line_size: i32) -> Vec<Vec<i32>>{ //r
     for _ in 0..set_num{
         for _ in 0..set_size{
             let mut temp = vec![];
-            for int in 0..line_size + 3{
+            for int in 0..line_size + 4{
                 if int == 0{
                     temp.push(index);
                 }else{
