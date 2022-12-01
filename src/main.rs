@@ -1,30 +1,29 @@
 extern crate core;
 
 mod cache;
-mod cache_block;
 
-use std::fs;
-use std::env;
-use std::process::exit;
 use crate::cache::Cache;
+use std::env;
+use std::fs;
+use std::process::exit;
 
 fn run() {
     let mut instruction_sets: Vec<String> = read_input_file();
     let mut config_nums: Vec<i32> = vec![];
-    for _ in 0..3{
+    for _ in 0..3 {
         config_nums.push(check_numbers(&instruction_sets[0]));
         instruction_sets.remove(0);
     }
     check_config(&config_nums);
     let mut cache: Cache = Cache::new(config_nums[0], config_nums[1], config_nums[2]);
-    for i in instruction_sets{
+    for i in instruction_sets {
         let instructions: Vec<String> = split_instruction(i);
-        cache.access(&instructions[0],  &instructions[1], &instructions[2]);
+        cache.access(&instructions[0], &instructions[1], &instructions[2]);
     }
     println!("{}", cache.to_string());
 }
 
-fn split_instruction(instruction: String) -> Vec<String>{
+fn split_instruction(instruction: String) -> Vec<String> {
     let new_instruction: Vec<&str> = instruction.split_terminator(":").collect();
     let new_instruction: Vec<String> = new_instruction.iter().map(|x| x.to_string()).collect();
     return new_instruction;
@@ -35,13 +34,13 @@ fn read_input_file() -> Vec<String> {
     let path: String = arguments.get(2).unwrap().to_string();
     let file_contents = fs::read_to_string(&path).expect("Input file invalid.");
     let mut input_strings: Vec<String> = file_contents.lines().map(String::from).collect();
-    for i in 0..3{
+    for i in 0..3 {
         input_strings[i] = input_strings[i].chars().last().unwrap().to_string();
     }
     return input_strings;
 }
 
-fn check_numbers(set_num: &String) -> i32{
+fn check_numbers(set_num: &String) -> i32 {
     let returnable: i32;
     match set_num.parse::<i32>() {
         Ok(num) => {
@@ -55,16 +54,16 @@ fn check_numbers(set_num: &String) -> i32{
     returnable
 }
 
-fn check_config(numbers: &Vec<i32>){
-    if numbers[0] > 8000{
+fn check_config(numbers: &Vec<i32>) {
+    if numbers[0] > 8000 {
         println!("Number of sets exceeds 8000");
         exit(1);
     }
-    if numbers[1] > 8{
+    if numbers[1] > 8 {
         println!("Associativity level exceeds 8");
         exit(1);
     }
-    if numbers[2] < 4{
+    if numbers[2] < 4 {
         println!("Line size is less than 4");
         exit(1);
     }
