@@ -15,12 +15,13 @@ fn run() {
         instruction_sets.remove(0);
     }
     check_config(&config_nums);
-    let mut cache: Cache = Cache::new(config_nums[0], config_nums[1], config_nums[2]);
+    let mut cache: Cache = Cache::new(config_nums[0], config_nums[1], config_nums[2], 0.0, 0.0);
     for i in instruction_sets {
         let instructions: Vec<String> = split_instruction(i);
         cache.access(&instructions[0], &instructions[1], &instructions[2]);
     }
     println!("{}", cache.to_string());
+    println!("{}", cache.summary());
 }
 
 fn split_instruction(instruction: String) -> Vec<String> {

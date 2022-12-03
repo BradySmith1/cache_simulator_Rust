@@ -5,16 +5,20 @@ pub struct Cache {
     set_num: i32,
     set_size: i32,
     line_size: i32,
+    total_hits: f64,    // field for total hits
+    total_misses: f64,  // field for total misses
     pub log_access: String,
     cache_blocks: Vec<Vec<i32>>,
 }
 
 impl Cache{
-    pub fn new( set_num: i32, set_size: i32, line_size: i32) -> Self {
+    pub fn new( set_num: i32, set_size: i32, line_size: i32, total_hits: f64, total_misses: f64) -> Self {
         Self {
             set_num,
             set_size,
             line_size,
+            total_hits,
+            total_misses,
             log_access: init_log(set_num, set_size, line_size),
             cache_blocks: init_cache(set_num, set_size, line_size),
         }
@@ -47,12 +51,14 @@ impl Cache{
             if self.cache_blocks[cache_num][0] == cache_details[1]{
                 //checks if the index has been used already, if not it populates it
                 if self.cache_blocks[cache_num][self.cache_blocks[cache_num].len() - 1] == 0{
+                    self.total_misses += 1.0;         // >>>>>>>> Updates total_misses for read
                     mem_reference += 1;
                     self.mem_to_cache(cache_num, cache_details, mem_address, mem_reference);
                     return mem_reference;
                 }else{
                     //check if address is already in cache
                     if self.cache_blocks[cache_num][(cache_details[2] + 3) as usize] == 1 && self.cache_blocks[cache_num][1] == cache_details[0]{
+                        self.total_hits += 1.0;       // >>>>>>>> Updates total_hits for read
                         write!(self.log_access, "read\t\t{}\t\t{}\t{}\t{}\thit\t\t{}\n\t",
                                mem_address, cache_details[0 as usize], cache_details[1 as usize],
                                cache_details[2 as usize], mem_reference.to_string())
@@ -64,6 +70,7 @@ impl Cache{
                         cache_num += 1;
                         continue;
                     }else{
+                        self.total_misses += 1.0;    // >>>>>>> updates total misses for read
                         mem_reference += 1;
                         let mut beginning_cache = cache_num - (searches as usize);
                         for num in beginning_cache..cache_num{
@@ -92,6 +99,7 @@ impl Cache{
             //finds the correct index in the cache
             if self.cache_blocks[cache_num][0] == cache_details[1]{
                 //write is a hit and rewrites the cache
+                self.total_hits += 1.0;                 // >>>>>>>>> Update of total_hits for write
                 let hit = "hit".to_string();
                 if self.cache_blocks[cache_num][1] == cache_details[0]{
                     self.write_back_cache(cache_num, cache_details, mem_address, mem_reference, hit);
@@ -103,6 +111,7 @@ impl Cache{
                         continue;
                     }else{
                         //write miss
+                        self.total_misses += 1.0;     // >>>>>>>> update of total_misses for write
                         let miss = "miss".to_string();
                         mem_reference = self.write_allocate_cache(cache_num, searches, cache_details);
                         self.write_back_cache(cache_num, &cache_details, mem_address, mem_reference, miss);
@@ -182,6 +191,18 @@ impl Cache{
 
     pub fn to_string(&self) -> String {
         self.log_access.clone()
+    }
+
+    pub fn summary(&self) -> String{
+        let mut summary: String = String::new();
+        let mut total_accesses: f64 = self.total_hits + self.total_misses;
+        write!(summary, "Simulation Summary Statistics\n").expect("Failure writing to string");
+        write!(summary, "-----------------------------\n").expect("Failure writing to string");
+        write!(summary, "{}", format_args!("Total hits\t\t\t: {}\nTotal misses\t\t: {}\nTotal accesses\t\t: \
+            {}\nHit ratio\t\t\t: {}\nMiss ratio\t\t\t: {}", self.total_hits, self.total_misses, total_accesses,
+            self.total_hits / total_accesses, self.total_misses / total_accesses))
+            .expect("Failure writing to string");
+        summary
     }
 }
 
