@@ -47,7 +47,7 @@ fn read_input_file() -> Vec<String> {
     };
     let mut input_strings: Vec<String> = file_contents.lines().map(String::from).collect();
     for i in 0..3 {
-        input_strings[i] = input_strings[i].chars().last().unwrap().to_string();
+        input_strings[i] = input_strings[i].split(" ").last().unwrap().to_string();
     }
     return input_strings;
 }

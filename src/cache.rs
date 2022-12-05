@@ -99,10 +99,12 @@ impl Cache{
             //finds the correct index in the cache
             if self.cache_blocks[cache_num][0] == cache_details[1]{
                 //write is a hit and rewrites the cache
-                self.total_hits += 1.0;                 // >>>>>>>>> Update of total_hits for write
                 let hit = "hit".to_string();
-                if self.cache_blocks[cache_num][1] == cache_details[0]{
+                if self.cache_blocks[cache_num][1] == cache_details[0] &&
+                    self.cache_blocks[cache_num][self.cache_blocks[cache_num].len() - 1] == 1{
+                    self.total_hits += 1.0;                 // >>>>>>>>> Update of total_hits for write
                     self.write_back_cache(cache_num, cache_details, mem_address, mem_reference, hit);
+                    return;
                 }else{
                     if self.set_size - 1 > searches {
                         //if the index is not in the cache, it checks the next index
@@ -118,6 +120,8 @@ impl Cache{
                         return;
                     }
                 }
+            }else{
+                cache_num += 1;
             }
         }
     }
