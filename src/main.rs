@@ -6,52 +6,59 @@ use crate::cache::Cache;
 use std::env;
 use std::fs;
 use std::process::exit;
-//! File that runs the simulation of a cache.
-//!
-//! Author: Michael Imerman and Brady Smith
-//! Version: 1.0.0
-//!
+/// File that runs the simulation of a cache.
+///
+/// Author: Michael Imerman and Brady Smith
+/// Version: 1.0.0
+///
 
+/// Function that calls various local methods and creates a new cache to access.
+/// Prints results of access at the end.
+///
 fn run() {
-    /// Function that calls various local methods and creates a new cache to access.
-    /// Prints results of access at the end.
-    ///
+    //reads the input file.
     let mut instruction_sets: Vec<String> = read_input_file();
     let mut config_nums: Vec<i32> = vec![];
     for _ in 0..3 {
         config_nums.push(check_numbers(&instruction_sets[0]));
         instruction_sets.remove(0);
     }
+    //checks config for if the cache config would work or not.
     check_config(&config_nums);
     let mut cache: Cache = Cache::new(config_nums[0], config_nums[1], config_nums[2], 0.0, 0.0);
+    //for loop for the cache to access the instructions.
     for i in instruction_sets {
         let instructions: Vec<String> = split_instruction(i);
         cache.access(&instructions[0], &instructions[1], &instructions[2]);
     }
+    //prints the log of the cache
     println!("{}", cache.to_string());
     println!("{}", cache.summary());
 }
 
+/// Splits the instruction that is input to grab the values between a : and returns the
+/// instruction.
+///
+/// # Arguments
+///
+/// instruction - An array of strings that is returned to hold the whole instruction.
+///
 fn split_instruction(instruction: String) -> Vec<String> {
-    /// Splits the instruction that is input to grab the values between a : and returns the
-    /// instruction.
-    ///
-    /// # Arguments
-    ///
-    /// instruction - An array of strings that is returned to hold the whole instruction.
-    ///
     let new_instruction: Vec<&str> = instruction.split_terminator(":").collect();
+    //maps the primitive string to a string object.
     let new_instruction: Vec<String> = new_instruction.iter().map(|x| x.to_string()).collect();
     return new_instruction;
 }
 
+/// Allows the reading of the input file and describes how to run if the original input
+/// was incorrect.
+/// Grabs the values and returns an array of strings.
+/// Does some error handling for if the file input is invalid.
+///
 fn read_input_file() -> Vec<String> {
-    /// Allows the reading of the input file and describes how to run if the original input
-    /// was incorrect.
-    /// Grabs the values and returns an array of strings.
-    /// Does some error handling for if the file input is invalid.
-    ///
+    //grabs the input file from the command line.
     let arguments: Vec<String> = env::args().collect();
+    //checks if the amount of arguments is correct.
     if arguments.len() != 3 {
         println!("Usage: cargo run -- -f <input_file>");
         exit(1);
@@ -71,6 +78,8 @@ fn read_input_file() -> Vec<String> {
     }
     return input_strings;
 }
+
+
 /// Checks to ensure that the number of sets is valid and prints a message if is not.
 fn check_numbers(set_num: &String) -> i32 {
     let returnable: i32;
@@ -86,16 +95,16 @@ fn check_numbers(set_num: &String) -> i32 {
     returnable
 }
 
+/// Does various checks for the configuration of the input file to ensure the cache
+/// can be modeled correctly.
+///
+/// # Arguments
+///
+/// numbers - An array of numbers that represents various parts of the input file like \
+/// number of sets, associativity level, line size of the input file, and if sets/line size
+/// is a power of 2.
+///
 fn check_config(numbers: &Vec<i32>) {
-    /// Does various checks for the configuration of the input file to ensure the cache
-    /// can be modeled correctly.
-    ///
-    /// # Arguments
-    ///
-    /// numbers - An array of numbers that represents various parts of the input file like \
-    /// number of sets, associativity level, line size of the input file, and if sets/line size
-    /// is a power of 2.
-    ///
     if numbers[0] > 8000 {
         println!("Number of sets exceeds 8000");
         exit(1);
@@ -114,6 +123,7 @@ fn check_config(numbers: &Vec<i32>) {
     }
 }
 
+/// Main function that calls the run function.
 pub fn main() {
     run();
 }

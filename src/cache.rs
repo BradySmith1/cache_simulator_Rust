@@ -2,7 +2,9 @@ use std::fmt::Write;
 use std::process::exit;
 use pad::{PadStr, Alignment};
 
+/// Struct that holds the cache and all of its values.
 pub struct Cache {
+    //field for how many sets are in the cache
     set_num: i32,
     // field for the size of the set
     set_size: i32,
@@ -12,11 +14,24 @@ pub struct Cache {
     total_hits: f64,
     // field for total misses
     total_misses: f64,
+    // field for total accesses
     pub log_access: String,
+    // field for the cache itself
     cache_blocks: Vec<Vec<i32>>,
 }
 
+/// implements the structure of the cache.
 impl Cache {
+    /// the constructor for the cache structure.
+    ///
+    /// # Arguments
+    ///
+    /// set_num - the number of sets in the cache
+    /// set_size - the size of the set
+    /// line_size - the size of a line in a cache
+    /// total_hits - the total number of hits
+    /// total_misses - the total number of misses
+    ///
     pub fn new(set_num: i32, set_size: i32, line_size: i32, total_hits: f64, total_misses: f64)
                -> Self {
         Self {
@@ -30,9 +45,18 @@ impl Cache {
         }
     }
 
+    /// the function that accesses the cache and determines if there is a hit or miss. Along with
+    /// populating the cache with new data if needed.
+    ///
+    /// # Arguments
+    ///
+    /// instruction_type - the type of instruction that is being accessed
+    /// size - the size of the instruction
+    /// mem_address - the memory address of the instruction
+    ///
     pub fn access(&mut self, instruction_type: &String, size: &String, mem_address: &String) {
         if check_request(size, hex_to_decimal(mem_address)) == false {
-            return;
+            exit(1);
         }
         let cache_details_str = self.split_address(hex_to_binary(mem_address));
         let cache_details = binary_to_decimal(cache_details_str);
@@ -48,6 +72,18 @@ impl Cache {
         }
     }
 
+    /// the function to read the cache and determine if there is a hit or miss. Needs to go to memory
+    /// if there is a miss.
+    ///
+    /// # Arguments
+    ///
+    /// cache_details - the details of the cache that are needed to access the cache
+    /// mem_address - the memory address of the instruction
+    ///
+    /// # Returns
+    ///
+    /// returns the number of memory references.
+    ///
     fn read_cache(&mut self, cache_details: &Vec<i32>, mem_address: &String) -> i32 {
         let mut mem_reference: i32 = 0;
         let mut searches = 0;
@@ -98,6 +134,14 @@ impl Cache {
         return mem_reference;
     }
 
+    /// the function to write to the cache and determine if there is a hit or miss. Needs to go to
+    /// memory if there is a miss.
+    ///
+    /// # Arguments
+    ///
+    /// cache_details - the details of the cache that are needed to access the cache
+    /// mem_address - the memory address of the instruction
+    ///
     fn write_cache(&mut self, cache_details: &Vec<i32>, mem_address: &String) {
         let mut mem_reference: i32 = 0;
         let mut searches = 0;
@@ -133,6 +177,18 @@ impl Cache {
         }
     }
 
+    /// the function to write and read from memory if there is a miss in a write instruction.
+    ///
+    /// # Arguments
+    ///
+    /// cache_num - the index of the cache that is being accessed
+    /// searches - the number of searches that have been done
+    /// cache_details - the details of the cache that are needed to access the cache
+    ///
+    /// # Returns
+    ///
+    /// returns the number of memory references.
+    ///
     fn write_allocate_cache(&mut self, cache_num: usize, searches: i32, cache_details: &Vec<i32>) -> i32 {
         let mut mem_reference = 1;
         //checks for dirty bit, if 1 then it has to write it back to memory before replacing
@@ -152,8 +208,18 @@ impl Cache {
         return mem_reference;
     }
 
+    /// the function to read from memory and write to cache.
+    ///
+    /// # Arguments
+    ///
+    /// cache_num - the index of the cache that is being accessed
+    /// cache_details - the details of the cache that are needed to access the cache
+    /// mem_address - the memory address of the instruction
+    /// mem_reference - the number of memory references
+    ///
     fn mem_to_cache(&mut self, cache_num: usize, cache_details: &Vec<i32>, mem_address: &String, mem_reference: i32) {
         self.cache_blocks[cache_num][1] = cache_details[0];
+        //simulates populating the cache with the memory address
         for offset in 3..self.cache_blocks[cache_num].len() {
             self.cache_blocks[cache_num][offset] = 1;
         }
@@ -164,7 +230,18 @@ impl Cache {
         return;
     }
 
+    /// the function to write back to a cache.
+    ///
+    /// # Arguments
+    ///
+    /// cache_num - the index of the cache that is being accessed
+    /// cache_details - the details of the cache that are needed to access the cache
+    /// mem_address - the memory address of the instruction
+    /// mem_reference - the number of memory references
+    /// hit_miss - the string of whether it was a hit or miss
+    ///
     fn write_back_cache(&mut self, cache_num: usize, cache_details: &Vec<i32>, mem_address: &String, mem_reference: i32, hit_miss: String) {
+        //simulates populating the cache with the memory address
         for offset in 2..self.cache_blocks[cache_num].len() {
             self.cache_blocks[cache_num][offset] = 1;
         }
@@ -175,6 +252,16 @@ impl Cache {
         return;
     }
 
+    /// the function to split the memory address into the tag, index, and offset.
+    ///
+    /// # Arguments
+    ///
+    /// address - the memory address of the instruction
+    ///
+    /// # Returns
+    ///
+    /// returns a vector of the tag, index, and offset.
+    ///
     fn split_address(&self, address: String) -> Vec<String> {
         let address = address.chars().rev().collect::<String>();
         let mut tag: String = String::new();
@@ -184,6 +271,7 @@ impl Cache {
         let temp_line_size = fast_math::log2(self.line_size as f32);
         let temp_set_num = fast_math::log2(self.set_num as f32);
         let mut i = 0;
+        //while loops to get the tag, index, and offset
         while i < address.len() {
             if i < temp_line_size as usize {
                 offset.push(address.chars().nth(i).unwrap());
@@ -200,18 +288,24 @@ impl Cache {
         returnable
     }
 
+    /// the function to that returns the log access.
+    ///
+    /// # Returns
+    ///
+    /// returns the log access.
+    ///
     pub fn to_string(&self) -> String {
         self.log_access.clone()
     }
 
+    /// Produces a summary statistics string that is returned and printed at the end of the
+    /// program.
+    ///
+    /// # Arguments
+    ///
+    /// * &self - refers to the current module.
+    ///
     pub fn summary(&self) -> String {
-        /// Produces a summary statistics string that is returned and printed at the end of the
-        /// program.
-        ///
-        /// # Arguments
-        ///
-        /// * &self - refers to the current module.
-        ///
         let mut summary: String = String::new();
         let mut total_accesses: f64 = self.total_hits + self.total_misses;
         write!(summary, "Simulation Summary Statistics\n").expect("Failure writing to string");
@@ -224,31 +318,31 @@ impl Cache {
     }
 }
 
+/// Determines if the request for memory access is misaligned and returns true if access is
+/// valid, or false if the access is not valid.
+///
+/// # Arguments
+///
+/// * mem_add_num - An integer that represents the memory address.
+/// * size - A string that represents the size in bytes to read or write.
+///
 fn check_request(size: &String, mem_add_num: i32) -> bool {
-    /// Determines if the request for memory access is misaligned and returns true if access is
-    /// valid, or false if the access is not valid.
-    ///
-    /// # Arguments
-    ///
-    /// * mem_add_num - An integer that represents the memory address.
-    /// * size - A string that represents the size in bytes to read or write.
-    /// 
     let size_result = size.parse::<i32>().unwrap();
     if mem_add_num % size_result != 0 {
-        println!("Memory Address is misaligned. Access will be ignored.");
+        println!("Memory Address is misaligned. Program will exit");
         return false;
     }
     return true;
 }
 
+/// Converts a hex string to a binary string by correlating a value of hex to 4 bits of binary
+/// and returns the binary string.
+///
+/// # Arguments
+///
+/// * word - A string that represents the hex value.
+///
 fn hex_to_binary(word: &String) -> String {
-    /// Converts a hex string to a binary string by correlating a value of hex to 4 bits of binary
-    /// and returns the binary string.
-    ///
-    /// # Arguments
-    ///
-    /// * word - A string that represents the hex value.
-    ///
     let returns = word.chars().map(to_binary).collect();
     fn to_binary(letter: char) -> &'static str {
         match letter.to_ascii_uppercase() {
@@ -274,13 +368,13 @@ fn hex_to_binary(word: &String) -> String {
     returns
 }
 
+/// Converts an array of binary to an array of integers and returns it.
+///
+/// # Arguments
+///
+/// * cache_details - An array of strings that represent binary.
+///
 fn binary_to_decimal(cache_details: Vec<String>) -> Vec<i32> {
-    /// Converts an array of binary to an array of integers and returns it.
-    ///
-    /// # Arguments
-    ///
-    /// * cache_details - An array of strings that represent binary.
-    ///
     let mut returns: Vec<i32> = vec![];
     for detail in cache_details {
         if detail.eq("") {
@@ -293,26 +387,26 @@ fn binary_to_decimal(cache_details: Vec<String>) -> Vec<i32> {
     returns
 }
 
+/// Simple function that converts from hex to decimal and returns the decimal.
+///
+/// # Arguments
+///
+/// * string - String passed in to be converted.
+///
 fn hex_to_decimal(string: &String) -> i32 {
-    /// Simple function that converts from hex to decimal and returns the decimal.
-    ///
-    /// # Arguments
-    ///
-    /// * string - String passed in to be converted.
-    ///
     let returns = i64::from_str_radix(string, 16).expect("Unable to convert from hex to decimal");
     returns as i32
 }
 
+/// Returns and array of arrays with integers in them, initializing the cache.
+///
+/// # Arguments
+///
+/// * set_num - Integer that represents the number of sets.
+/// * set_size - Integer that represents the size of a set.
+/// * line_size - Integer that represents the size of a line (bytes).
+///
 fn init_cache(set_num: i32, set_size: i32, line_size: i32) -> Vec<Vec<i32>> {
-    /// Returns and array of arrays with integers in them, initializing the cache.
-    ///
-    /// # Arguments
-    ///
-    /// * set_num - Integer that represents the number of sets.
-    /// * set_size - Integer that represents the size of a set.
-    /// * line_size - Integer that represents the size of a line (bytes).
-    ///
     let mut returns = vec![];
     let mut index = 0;
     for _ in 0..set_num {
@@ -332,18 +426,18 @@ fn init_cache(set_num: i32, set_size: i32, line_size: i32) -> Vec<Vec<i32>> {
     returns
 }
 
+/// Returns a large string that is output on the console at the end of main.rs.
+/// Displays various information like access type, address, tag, index, offset,
+/// result (hit or miss) and memory references.
+/// Does some formatting to give a better visual output.
+///
+/// # Arguments
+///
+/// * set_num - An integer that represents the number of sets.
+/// * set_size - An integer that represents the size of a set.
+/// * line_size - An integer that represents the size of a line (bytes).
+///
 fn init_log(set_num: i32, set_size: i32, line_size: i32) -> String {
-    /// Returns a large string that is output on the console at the end of main.rs.
-    /// Displays various information like access type, address, tag, index, offset,
-    /// result (hit or miss) and memory references.
-    /// Does some formatting to give a better visual output.
-    ///
-    /// # Arguments
-    ///
-    /// * set_num - An integer that represents the number of sets.
-    /// * set_size - An integer that represents the size of a set.
-    /// * line_size - An integer that represents the size of a line (bytes).
-    ///
     let mut log_access = String::new();
     write!(log_access, "Cache Configuration\n\n").expect("Failure writing to string");
     write!(log_access, "{}", format_args!("\t{} {}-way set associative entries\n\tof line size {} \
