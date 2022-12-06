@@ -6,8 +6,16 @@ use crate::cache::Cache;
 use std::env;
 use std::fs;
 use std::process::exit;
+//! File that runs the simulation of a cache.
+//!
+//! Author: Michael Imerman and Brady Smith
+//! Version: 1.0.0
+//!
 
 fn run() {
+    /// Function that calls various local methods and creates a new cache to access.
+    /// Prints results of access at the end.
+    ///
     let mut instruction_sets: Vec<String> = read_input_file();
     let mut config_nums: Vec<i32> = vec![];
     for _ in 0..3 {
@@ -25,12 +33,24 @@ fn run() {
 }
 
 fn split_instruction(instruction: String) -> Vec<String> {
+    /// Splits the instruction that is input to grab the values between a : and returns the
+    /// instruction.
+    ///
+    /// # Arguments
+    ///
+    /// instruction - An array of strings that is returned to hold the whole instruction.
+    ///
     let new_instruction: Vec<&str> = instruction.split_terminator(":").collect();
     let new_instruction: Vec<String> = new_instruction.iter().map(|x| x.to_string()).collect();
     return new_instruction;
 }
 
 fn read_input_file() -> Vec<String> {
+    /// Allows the reading of the input file and describes how to run if the original input
+    /// was incorrect.
+    /// Grabs the values and returns an array of strings.
+    /// Does some error handling for if the file input is invalid.
+    ///
     let arguments: Vec<String> = env::args().collect();
     if arguments.len() != 3 {
         println!("Usage: cargo run -- -f <input_file>");
@@ -51,7 +71,7 @@ fn read_input_file() -> Vec<String> {
     }
     return input_strings;
 }
-
+/// Checks to ensure that the number of sets is valid and prints a message if is not.
 fn check_numbers(set_num: &String) -> i32 {
     let returnable: i32;
     match set_num.parse::<i32>() {
@@ -67,6 +87,15 @@ fn check_numbers(set_num: &String) -> i32 {
 }
 
 fn check_config(numbers: &Vec<i32>) {
+    /// Does various checks for the configuration of the input file to ensure the cache
+    /// can be modeled correctly.
+    ///
+    /// # Arguments
+    ///
+    /// numbers - An array of numbers that represents various parts of the input file like \
+    /// number of sets, associativity level, line size of the input file, and if sets/line size
+    /// is a power of 2.
+    ///
     if numbers[0] > 8000 {
         println!("Number of sets exceeds 8000");
         exit(1);

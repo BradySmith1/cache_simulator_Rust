@@ -4,12 +4,14 @@ use pad::{PadStr, Alignment};
 
 pub struct Cache {
     set_num: i32,
+    // field for the size of the set
     set_size: i32,
+    // field for the size of a line
     line_size: i32,
-    total_hits: f64,
     // field for total hits
-    total_misses: f64,
+    total_hits: f64,
     // field for total misses
+    total_misses: f64,
     pub log_access: String,
     cache_blocks: Vec<Vec<i32>>,
 }
@@ -203,6 +205,13 @@ impl Cache {
     }
 
     pub fn summary(&self) -> String {
+        /// Produces a summary statistics string that is returned and printed at the end of the
+        /// program.
+        ///
+        /// # Arguments
+        ///
+        /// * &self - refers to the current module.
+        ///
         let mut summary: String = String::new();
         let mut total_accesses: f64 = self.total_hits + self.total_misses;
         write!(summary, "Simulation Summary Statistics\n").expect("Failure writing to string");
@@ -216,6 +225,14 @@ impl Cache {
 }
 
 fn check_request(size: &String, mem_add_num: i32) -> bool {
+    /// Determines if the request for memory access is misaligned and returns true if access is
+    /// valid, or false if the access is not valid.
+    ///
+    /// # Arguments
+    ///
+    /// * mem_add_num - An integer that represents the memory address.
+    /// * size - A string that represents the size in bytes to read or write.
+    /// 
     let size_result = size.parse::<i32>().unwrap();
     if mem_add_num % size_result != 0 {
         println!("Memory Address is misaligned. Access will be ignored.");
@@ -225,6 +242,13 @@ fn check_request(size: &String, mem_add_num: i32) -> bool {
 }
 
 fn hex_to_binary(word: &String) -> String {
+    /// Converts a hex string to a binary string by correlating a value of hex to 4 bits of binary
+    /// and returns the binary string.
+    ///
+    /// # Arguments
+    ///
+    /// * word - A string that represents the hex value.
+    ///
     let returns = word.chars().map(to_binary).collect();
     fn to_binary(letter: char) -> &'static str {
         match letter.to_ascii_uppercase() {
@@ -251,6 +275,12 @@ fn hex_to_binary(word: &String) -> String {
 }
 
 fn binary_to_decimal(cache_details: Vec<String>) -> Vec<i32> {
+    /// Converts an array of binary to an array of integers and returns it.
+    ///
+    /// # Arguments
+    ///
+    /// * cache_details - An array of strings that represent binary.
+    ///
     let mut returns: Vec<i32> = vec![];
     for detail in cache_details {
         if detail.eq("") {
@@ -264,11 +294,25 @@ fn binary_to_decimal(cache_details: Vec<String>) -> Vec<i32> {
 }
 
 fn hex_to_decimal(string: &String) -> i32 {
+    /// Simple function that converts from hex to decimal and returns the decimal.
+    ///
+    /// # Arguments
+    ///
+    /// * string - String passed in to be converted.
+    ///
     let returns = i64::from_str_radix(string, 16).expect("Unable to convert from hex to decimal");
     returns as i32
 }
 
-fn init_cache(set_num: i32, set_size: i32, line_size: i32) -> Vec<Vec<i32>> { //return type is broken.
+fn init_cache(set_num: i32, set_size: i32, line_size: i32) -> Vec<Vec<i32>> {
+    /// Returns and array of arrays with integers in them, initializing the cache.
+    ///
+    /// # Arguments
+    ///
+    /// * set_num - Integer that represents the number of sets.
+    /// * set_size - Integer that represents the size of a set.
+    /// * line_size - Integer that represents the size of a line (bytes).
+    ///
     let mut returns = vec![];
     let mut index = 0;
     for _ in 0..set_num {
@@ -289,6 +333,17 @@ fn init_cache(set_num: i32, set_size: i32, line_size: i32) -> Vec<Vec<i32>> { //
 }
 
 fn init_log(set_num: i32, set_size: i32, line_size: i32) -> String {
+    /// Returns a large string that is output on the console at the end of main.rs.
+    /// Displays various information like access type, address, tag, index, offset,
+    /// result (hit or miss) and memory references.
+    /// Does some formatting to give a better visual output.
+    ///
+    /// # Arguments
+    ///
+    /// * set_num - An integer that represents the number of sets.
+    /// * set_size - An integer that represents the size of a set.
+    /// * line_size - An integer that represents the size of a line (bytes).
+    ///
     let mut log_access = String::new();
     write!(log_access, "Cache Configuration\n\n").expect("Failure writing to string");
     write!(log_access, "{}", format_args!("\t{} {}-way set associative entries\n\tof line size {} \
