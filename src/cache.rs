@@ -115,7 +115,7 @@ impl Cache {
                     } else {
                         self.total_misses += 1.0;    // >>>>>>> updates total misses for read
                         mem_reference += 1;
-                        let mut beginning_cache = cache_num - (searches as usize);
+                        let beginning_cache = cache_num - (searches as usize);
                         for num in beginning_cache..cache_num {
                             if num + 1 <= cache_num {
                                 self.cache_blocks[num + 1] = self.cache_blocks[num].clone();
@@ -123,7 +123,6 @@ impl Cache {
                         }
                         self.mem_to_cache(beginning_cache, &cache_details, mem_address
                                           , mem_reference);
-                        cache_num += 1;
                         return mem_reference;
                     }
                 }
@@ -195,7 +194,7 @@ impl Cache {
         if self.cache_blocks[cache_num][2] == 1 {
             mem_reference += 1;
         }
-        let mut beginning_cache = cache_num - (searches as usize);
+        let beginning_cache = cache_num - (searches as usize);
         for num in beginning_cache..cache_num {
             if num + 1 <= cache_num {
                 self.cache_blocks[num + 1] = self.cache_blocks[num].clone();
@@ -307,7 +306,7 @@ impl Cache {
     ///
     pub fn summary(&self) -> String {
         let mut summary: String = String::new();
-        let mut total_accesses: f64 = self.total_hits + self.total_misses;
+        let total_accesses: f64 = self.total_hits + self.total_misses;
         write!(summary, "Simulation Summary Statistics\n").expect("Failure writing to string");
         write!(summary, "-----------------------------\n").expect("Failure writing to string");
         write!(summary, "{}", format_args!("Total hits       : {}\nTotal misses     : {}\nTotal accesses   : \
