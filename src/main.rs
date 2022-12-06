@@ -71,8 +71,10 @@ fn read_input_file() -> Vec<String> {
     }
     return input_strings;
 }
-/// Checks to ensure that the number of sets is valid and prints a message if is not.
+
+
 fn check_numbers(set_num: &String) -> i32 {
+    /// Checks to ensure that the number of sets is valid and prints a message if is not.
     let returnable: i32;
     match set_num.parse::<i32>() {
         Ok(num) => {
@@ -115,5 +117,6 @@ fn check_config(numbers: &Vec<i32>) {
 }
 
 pub fn main() {
+/// Main function that calls the run function.
     run();
 }

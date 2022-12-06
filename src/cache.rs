@@ -3,6 +3,8 @@ use std::process::exit;
 use pad::{PadStr, Alignment};
 
 pub struct Cache {
+/// Struct that holds the cache and all of its values.
+    //field for how many sets are in the cache
     set_num: i32,
     // field for the size of the set
     set_size: i32,
@@ -12,13 +14,26 @@ pub struct Cache {
     total_hits: f64,
     // field for total misses
     total_misses: f64,
+    // field for total accesses
     pub log_access: String,
+    // field for the cache itself
     cache_blocks: Vec<Vec<i32>>,
 }
 
 impl Cache {
+/// implements the structure of the cache.
     pub fn new(set_num: i32, set_size: i32, line_size: i32, total_hits: f64, total_misses: f64)
                -> Self {
+    /// the constructor for the cache structure.
+    ///
+    /// # Arguments
+    ///
+    /// set_num - the number of sets in the cache
+    /// set_size - the size of the set
+    /// line_size - the size of a line in a cache
+    /// total_hits - the total number of hits
+    /// total_misses - the total number of misses
+    ///
         Self {
             set_num,
             set_size,
@@ -31,6 +46,15 @@ impl Cache {
     }
 
     pub fn access(&mut self, instruction_type: &String, size: &String, mem_address: &String) {
+    /// the function that accesses the cache and determines if there is a hit or miss. Along with
+    /// populating the cache with new data if needed.
+    ///
+    /// # Arguments
+    ///
+    /// instruction_type - the type of instruction that is being accessed
+    /// size - the size of the instruction
+    /// mem_address - the memory address of the instruction
+    ///
         if check_request(size, hex_to_decimal(mem_address)) == false {
             return;
         }
@@ -49,6 +73,18 @@ impl Cache {
     }
 
     fn read_cache(&mut self, cache_details: &Vec<i32>, mem_address: &String) -> i32 {
+    /// the function to read the cache and determine if there is a hit or miss. Needs to go to memory
+    /// if there is a miss.
+    ///
+    /// # Arguments
+    ///
+    /// cache_details - the details of the cache that are needed to access the cache
+    /// mem_address - the memory address of the instruction
+    ///
+    /// # Returns
+    ///
+    /// returns the number of memory references.
+    ///
         let mut mem_reference: i32 = 0;
         let mut searches = 0;
         let mut cache_num = 0;
@@ -99,6 +135,14 @@ impl Cache {
     }
 
     fn write_cache(&mut self, cache_details: &Vec<i32>, mem_address: &String) {
+    /// the function to write to the cache and determine if there is a hit or miss. Needs to go to
+    /// memory if there is a miss.
+    ///
+    /// # Arguments
+    ///
+    /// cache_details - the details of the cache that are needed to access the cache
+    /// mem_address - the memory address of the instruction
+    ///
         let mut mem_reference: i32 = 0;
         let mut searches = 0;
         let mut cache_num = 0;
@@ -134,6 +178,18 @@ impl Cache {
     }
 
     fn write_allocate_cache(&mut self, cache_num: usize, searches: i32, cache_details: &Vec<i32>) -> i32 {
+    /// the function to write and read from memory if there is a miss in a write instruction.
+    ///
+    /// # Arguments
+    ///
+    /// cache_num - the index of the cache that is being accessed
+    /// searches - the number of searches that have been done
+    /// cache_details - the details of the cache that are needed to access the cache
+    ///
+    /// # Returns
+    ///
+    /// returns the number of memory references.
+    ///
         let mut mem_reference = 1;
         //checks for dirty bit, if 1 then it has to write it back to memory before replacing
         if self.cache_blocks[cache_num][2] == 1 {
@@ -153,6 +209,15 @@ impl Cache {
     }
 
     fn mem_to_cache(&mut self, cache_num: usize, cache_details: &Vec<i32>, mem_address: &String, mem_reference: i32) {
+    /// the function to read from memory and write to cache.
+    ///
+    /// # Arguments
+    ///
+    /// cache_num - the index of the cache that is being accessed
+    /// cache_details - the details of the cache that are needed to access the cache
+    /// mem_address - the memory address of the instruction
+    /// mem_reference - the number of memory references
+    ///
         self.cache_blocks[cache_num][1] = cache_details[0];
         for offset in 3..self.cache_blocks[cache_num].len() {
             self.cache_blocks[cache_num][offset] = 1;
@@ -165,6 +230,16 @@ impl Cache {
     }
 
     fn write_back_cache(&mut self, cache_num: usize, cache_details: &Vec<i32>, mem_address: &String, mem_reference: i32, hit_miss: String) {
+    /// the function to write back to a cache.
+    ///
+    /// # Arguments
+    ///
+    /// cache_num - the index of the cache that is being accessed
+    /// cache_details - the details of the cache that are needed to access the cache
+    /// mem_address - the memory address of the instruction
+    /// mem_reference - the number of memory references
+    /// hit_miss - the string of whether it was a hit or miss
+    ///
         for offset in 2..self.cache_blocks[cache_num].len() {
             self.cache_blocks[cache_num][offset] = 1;
         }
@@ -176,6 +251,15 @@ impl Cache {
     }
 
     fn split_address(&self, address: String) -> Vec<String> {
+    /// the function to split the memory address into the tag, index, and offset.
+    ///
+    /// # Arguments
+    ///
+    /// address - the memory address of the instruction
+    ///
+    /// # Returns
+    ///
+    /// returns a vector of the tag, index, and offset.
         let address = address.chars().rev().collect::<String>();
         let mut tag: String = String::new();
         let mut index: String = String::new();
@@ -201,6 +285,12 @@ impl Cache {
     }
 
     pub fn to_string(&self) -> String {
+    /// the function to that returns the log access.
+    ///
+    /// # Returns
+    ///
+    /// returns the log access.
+    ///
         self.log_access.clone()
     }
 
