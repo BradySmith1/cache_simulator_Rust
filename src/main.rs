@@ -23,8 +23,6 @@ fn run() {
         config_nums.push(check_numbers(&instruction_sets[0]));
         instruction_sets.remove(0);
     }
-    //checks config for if the cache config would work or not.
-    check_config(&config_nums);
     let mut cache: Cache = Cache::new(config_nums[0], config_nums[1], config_nums[2], 0.0, 0.0);
     //for loop for the cache to access the instructions.
     for i in instruction_sets {
@@ -74,6 +72,7 @@ fn read_input_file() -> Vec<String> {
     };
     let mut input_strings: Vec<String> = file_contents.lines().map(String::from).collect();
     for i in 0..3 {
+        input_strings[i] = input_strings[i].trim().to_string();
         input_strings[i] = input_strings[i].split(" ").last().unwrap().to_string();
     }
     return input_strings;
@@ -93,34 +92,6 @@ fn check_numbers(set_num: &String) -> i32 {
         }
     }
     returnable
-}
-
-/// Does various checks for the configuration of the input file to ensure the cache
-/// can be modeled correctly.
-///
-/// # Arguments
-///
-/// numbers - An array of numbers that represents various parts of the input file like \
-/// number of sets, associativity level, line size of the input file, and if sets/line size
-/// is a power of 2.
-///
-fn check_config(numbers: &Vec<i32>) {
-    if numbers[0] > 8000 {
-        println!("Number of sets exceeds 8000");
-        exit(1);
-    }
-    if numbers[1] > 8 {
-        println!("Associativity level exceeds 8");
-        exit(1);
-    }
-    if numbers[2] < 4 {
-        println!("Line size is less than 4");
-        exit(1);
-    }
-    if (numbers[0] % 2) != 0 || (numbers[2] % 2) != 0 {
-        println!("Number of sets/line size is not a power of 2");
-        exit(1);
-    }
 }
 
 /// Main function that calls the run function.

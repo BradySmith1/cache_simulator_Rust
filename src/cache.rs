@@ -101,7 +101,10 @@ impl Cache {
                     //check if address is already in cache
                     if self.cache_blocks[cache_num][(cache_details[2] + 3) as usize] == 1 &&
                         self.cache_blocks[cache_num][1] == cache_details[0] {
-                        self.total_hits += 1.0;       // >>>>>>>> Updates total_hits for read
+                        self.total_hits += 1.0; // >>>>>>>> Updates total_hits for read
+                        let beginning_cache = cache_num - (searches as usize);
+                        //checks if the address is already most recently used and if not moves it to the front.
+                        self.make_most_recent(cache_num, beginning_cache, cache_details);
                         write!(self.log_access, "{access}{}{}{}{}{miss_hit}{}\n",
                                mem_address.pad_to_width_with_alignment(9, Alignment::Right), cache_details[0 as usize].to_string().pad_to_width_with_alignment(8, Alignment::Right), cache_details[1 as usize].to_string().pad_to_width_with_alignment(6, Alignment::Right),
                                cache_details[2 as usize].to_string().pad_to_width_with_alignment(7, Alignment::Right), mem_reference.to_string().pad_to_width_with_alignment(8, Alignment::Right), access = "read".pad_to_width_with_alignment(6, Alignment::Right), miss_hit = "hit".pad_to_width_with_alignment(7, Alignment::Right))
@@ -116,11 +119,7 @@ impl Cache {
                         self.total_misses += 1.0;    // >>>>>>> updates total misses for read
                         mem_reference += 1;
                         let beginning_cache = cache_num - (searches as usize);
-                        for num in beginning_cache..cache_num {
-                            if num + 1 <= cache_num {
-                                self.cache_blocks[num + 1] = self.cache_blocks[num].clone();
-                            }
-                        }
+                        self.shift_cache_down(cache_num, beginning_cache);
                         self.mem_to_cache(beginning_cache, &cache_details, mem_address
                                           , mem_reference);
                         return mem_reference;
@@ -131,6 +130,29 @@ impl Cache {
             }
         }
         return mem_reference;
+    }
+
+    /// A helper function to update the most recently used address in the cache.
+    ///
+    /// # Arguments
+    ///
+    /// cache_num - the index of the cache that is being accessed
+    /// beginning_cache - the index of the beginning of the cache
+    /// cache_details - the details of the cache that are needed to access the cache
+    ///
+    fn make_most_recent(&mut self, cache_num: usize, beginning_cache: usize, cache_details: &Vec<i32>){
+        let mut done = false;
+        //checks if the address is already most recently used and if not moves it to the front.
+        while done == false{
+            if self.cache_blocks[beginning_cache][1] != cache_details[0]{
+                let end_of_set = ((self.set_size - 1) as usize) + beginning_cache;
+                let temp = self.cache_blocks[end_of_set].clone();
+                self.shift_cache_down(cache_num, beginning_cache);
+                self.cache_blocks[beginning_cache] = temp.clone();
+            }else{
+                done = true;
+            }
+        }
     }
 
     /// the function to write to the cache and determine if there is a hit or miss. Needs to go to
@@ -195,16 +217,27 @@ impl Cache {
             mem_reference += 1;
         }
         let beginning_cache = cache_num - (searches as usize);
-        for num in beginning_cache..cache_num {
-            if num + 1 <= cache_num {
-                self.cache_blocks[num + 1] = self.cache_blocks[num].clone();
-            }
-        }
+        self.shift_cache_down(cache_num, beginning_cache);
         self.cache_blocks[beginning_cache][1] = cache_details[0];
         for offset in 3..self.cache_blocks[beginning_cache].len() {
             self.cache_blocks[beginning_cache][offset] = 1;
         }
         return mem_reference;
+    }
+
+    ///Helper function to shift the whole cache down by one.
+    ///
+    /// # Arguments
+    ///
+    /// cache_num - the index of the cache that is being accessed
+    /// beginning_cache - the index of the beginning of the cache
+    ///
+    fn shift_cache_down(&mut self, cache_num: usize, beginning_cache: usize) {
+        for num in beginning_cache..cache_num {
+            if num + 1 <= cache_num {
+                self.cache_blocks[num + 1] = self.cache_blocks[num].clone();
+            }
+        }
     }
 
     /// the function to read from memory and write to cache.
@@ -406,6 +439,8 @@ fn hex_to_decimal(string: &String) -> i32 {
 /// * line_size - Integer that represents the size of a line (bytes).
 ///
 fn init_cache(set_num: i32, set_size: i32, line_size: i32) -> Vec<Vec<i32>> {
+    //checks config for if the cache config would work or not.
+    check_config(set_num, set_size, line_size);
     let mut returns = vec![];
     let mut index = 0;
     for _ in 0..set_num {
@@ -423,6 +458,34 @@ fn init_cache(set_num: i32, set_size: i32, line_size: i32) -> Vec<Vec<i32>> {
         index += 1;
     }
     returns
+}
+
+/// Does various checks for the configuration of the input file to ensure the cache
+/// can be modeled correctly.
+///
+/// # Arguments
+///
+/// numbers - An array of numbers that represents various parts of the input file like \
+/// number of sets, associativity level, line size of the input file, and if sets/line size
+/// is a power of 2.
+///
+fn check_config(set_num: i32, set_size: i32, line_size: i32) {
+    if set_num > 8000 {
+        println!("Number of sets exceeds 8000");
+        exit(1);
+    }
+    if set_size > 8 {
+        println!("Associativity level exceeds 8");
+        exit(1);
+    }
+    if line_size < 4 {
+        println!("Line size is less than 4");
+        exit(1);
+    }
+    if (set_num % 2) != 0 || (line_size % 2) != 0 {
+        println!("Number of sets/line size is not a power of 2");
+        exit(1);
+    }
 }
 
 /// Returns a large string that is output on the console at the end of main.rs.
