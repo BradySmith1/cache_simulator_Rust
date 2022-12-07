@@ -106,22 +106,7 @@ impl Cache {
                         //checks if the address is already most recently used and if not moves it
                         // to the front.
                         self.make_most_recent(cache_num, beginning_cache, cache_details);
-                        write!(self.log_access, "{access}{}{}{}{}{miss_hit}{}\n",
-                               mem_address
-                                   .pad_to_width_with_alignment(9, Alignment::Right),
-                               cache_details[0 as usize].to_string()
-                                   .pad_to_width_with_alignment(8, Alignment::Right),
-                               cache_details[1 as usize].to_string()
-                                   .pad_to_width_with_alignment(6, Alignment::Right),
-                               cache_details[2 as usize].to_string()
-                                   .pad_to_width_with_alignment(7, Alignment::Right),
-                               mem_reference.to_string()
-                                   .pad_to_width_with_alignment(8, Alignment::Right),
-                               access = "read"
-                                   .pad_to_width_with_alignment(6, Alignment::Right),
-                               miss_hit = "hit"
-                                   .pad_to_width_with_alignment(7, Alignment::Right))
-                            .expect("Failure writing to string");
+                        self.write_log(mem_address, cache_details, mem_reference, "hit".to_string(), "read".to_string());
                         return mem_reference;
                     } else if self.set_size - 1 > searches {
                         //if the index is not in the cache, it checks the next index
@@ -271,19 +256,7 @@ impl Cache {
         for offset in 3..self.cache_blocks[cache_num].len() {
             self.cache_blocks[cache_num][offset] = 1;
         }
-        write!(self.log_access, "{access}{}{}{}{}{miss_hit}{}\n",
-               mem_address.pad_to_width_with_alignment(9, Alignment::Right),
-               cache_details[0 as usize].to_string()
-                   .pad_to_width_with_alignment(8, Alignment::Right),
-               cache_details[1 as usize].to_string()
-                   .pad_to_width_with_alignment(6, Alignment::Right),
-               cache_details[2 as usize].to_string()
-                   .pad_to_width_with_alignment(7, Alignment::Right),
-               mem_reference.to_string()
-                   .pad_to_width_with_alignment(8, Alignment::Right),
-               access = "read".pad_to_width_with_alignment(6, Alignment::Right),
-               miss_hit = "miss".pad_to_width_with_alignment(7, Alignment::Right))
-            .expect("Failure writing to string");
+        self.write_log(mem_address, cache_details, mem_reference, "miss".to_string(), "read".to_string());
         return;
     }
 
@@ -303,19 +276,8 @@ impl Cache {
         for offset in 2..self.cache_blocks[cache_num].len() {
             self.cache_blocks[cache_num][offset] = 1;
         }
-        write!(self.log_access, "{access}{}{}{}{}{}{}\n",
-               mem_address.pad_to_width_with_alignment(9, Alignment::Right),
-               cache_details[0 as usize].to_string()
-                   .pad_to_width_with_alignment(8, Alignment::Right),
-               cache_details[1 as usize].to_string()
-                   .pad_to_width_with_alignment(6, Alignment::Right),
-               cache_details[2 as usize].to_string()
-                   .pad_to_width_with_alignment(7, Alignment::Right),
-               hit_miss.pad_to_width_with_alignment(7, Alignment::Right),
-               mem_reference.to_string()
-                   .pad_to_width_with_alignment(8, Alignment::Right),
-               access = "write".pad_to_width_with_alignment(6, Alignment::Right))
-            .expect("Failure writing to string");
+        self.write_log(mem_address, cache_details, mem_reference, hit_miss,
+                       "write".to_string());
         return;
     }
 
@@ -387,6 +349,33 @@ impl Cache {
                                                / total_accesses))
             .expect("Failure writing to string");
         summary
+    }
+
+    /// writes to the log based on the information on the instruction
+    ///
+    /// # Arguments
+    ///
+    /// * mem_address - the memory address of the instruction
+    /// * cache_details - the details of the cache that are needed to access the cache
+    /// * mem_reference - the number of memory references
+    /// * hit_miss - the string of whether it was a hit or miss
+    /// * read_write - the string of whether it was a read or write
+    ///
+    fn write_log(&mut self, mem_address: &String, cache_details: &Vec<i32>, mem_reference: i32,
+                 hit_miss: String, access: String) {
+        write!(self.log_access, "{access}{}{}{}{}{miss_hit}{}\n",
+               mem_address.pad_to_width_with_alignment(9, Alignment::Right),
+               cache_details[0 as usize].to_string()
+                   .pad_to_width_with_alignment(8, Alignment::Right),
+               cache_details[1 as usize].to_string()
+                   .pad_to_width_with_alignment(6, Alignment::Right),
+               cache_details[2 as usize].to_string()
+                   .pad_to_width_with_alignment(7, Alignment::Right),
+               mem_reference.to_string()
+                   .pad_to_width_with_alignment(8, Alignment::Right),
+               access = access.pad_to_width_with_alignment(6, Alignment::Right),
+               miss_hit = hit_miss.pad_to_width_with_alignment(7, Alignment::Right))
+            .expect("Failure writing to string");
     }
 }
 
@@ -517,6 +506,10 @@ fn check_config(set_num: i32, set_size: i32, line_size: i32) {
     }
     if set_size > 8 {
         println!("Associativity level exceeds 8");
+        exit(1);
+    }
+    if set_size <= 0 {
+        println!("Set size cannot be less than or equal to 0");
         exit(1);
     }
     if line_size < 4 {
