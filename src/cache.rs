@@ -155,17 +155,13 @@ impl Cache {
     ///
     fn make_most_recent(&mut self, cache_num: usize, beginning_cache: usize,
                         cache_details: &Vec<i32>){
-        let mut done = false;
         //checks if the address is already most recently used and if not moves it to the front.
-        while done == false{
-            if self.cache_blocks[beginning_cache][1] != cache_details[0]{
-                let end_of_set = ((self.set_size - 1) as usize) + beginning_cache;
-                let temp = self.cache_blocks[end_of_set].clone();
-                self.shift_cache_down(cache_num, beginning_cache);
-                self.cache_blocks[beginning_cache] = temp.clone();
-            }else{
-                done = true;
-            }
+        if self.cache_blocks[beginning_cache][1] != cache_details[0]{
+            let temp = self.cache_blocks[cache_num].clone();
+            self.shift_cache_down(cache_num, beginning_cache);
+            self.cache_blocks[beginning_cache] = temp.clone();
+        }else{
+            return;
         }
     }
 
@@ -191,6 +187,7 @@ impl Cache {
                     self.total_hits += 1.0;              // >>>>>>>>> Update of total_hits for write
                     self.write_back_cache(cache_num, cache_details, mem_address,
                                           mem_reference, hit);
+                    self.make_most_recent(cache_num, cache_num - (searches as usize), cache_details);
                     return;
                 } else {
                     if self.set_size - 1 > searches {
