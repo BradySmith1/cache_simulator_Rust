@@ -72,8 +72,8 @@ impl Cache {
         }
     }
 
-    /// the function to read the cache and determine if there is a hit or miss. Needs to go to memory
-    /// if there is a miss.
+    /// the function to read the cache and determine if there is a hit or miss.
+    /// Needs to go to memory if there is a miss.
     ///
     /// # Arguments
     ///
@@ -103,11 +103,24 @@ impl Cache {
                         self.cache_blocks[cache_num][1] == cache_details[0] {
                         self.total_hits += 1.0; // >>>>>>>> Updates total_hits for read
                         let beginning_cache = cache_num - (searches as usize);
-                        //checks if the address is already most recently used and if not moves it to the front.
+                        //checks if the address is already most recently used and if not moves it
+                        // to the front.
                         self.make_most_recent(cache_num, beginning_cache, cache_details);
                         write!(self.log_access, "{access}{}{}{}{}{miss_hit}{}\n",
-                               mem_address.pad_to_width_with_alignment(9, Alignment::Right), cache_details[0 as usize].to_string().pad_to_width_with_alignment(8, Alignment::Right), cache_details[1 as usize].to_string().pad_to_width_with_alignment(6, Alignment::Right),
-                               cache_details[2 as usize].to_string().pad_to_width_with_alignment(7, Alignment::Right), mem_reference.to_string().pad_to_width_with_alignment(8, Alignment::Right), access = "read".pad_to_width_with_alignment(6, Alignment::Right), miss_hit = "hit".pad_to_width_with_alignment(7, Alignment::Right))
+                               mem_address
+                                   .pad_to_width_with_alignment(9, Alignment::Right),
+                               cache_details[0 as usize].to_string()
+                                   .pad_to_width_with_alignment(8, Alignment::Right),
+                               cache_details[1 as usize].to_string()
+                                   .pad_to_width_with_alignment(6, Alignment::Right),
+                               cache_details[2 as usize].to_string()
+                                   .pad_to_width_with_alignment(7, Alignment::Right),
+                               mem_reference.to_string()
+                                   .pad_to_width_with_alignment(8, Alignment::Right),
+                               access = "read"
+                                   .pad_to_width_with_alignment(6, Alignment::Right),
+                               miss_hit = "hit"
+                                   .pad_to_width_with_alignment(7, Alignment::Right))
                             .expect("Failure writing to string");
                         return mem_reference;
                     } else if self.set_size - 1 > searches {
@@ -140,7 +153,8 @@ impl Cache {
     /// beginning_cache - the index of the beginning of the cache
     /// cache_details - the details of the cache that are needed to access the cache
     ///
-    fn make_most_recent(&mut self, cache_num: usize, beginning_cache: usize, cache_details: &Vec<i32>){
+    fn make_most_recent(&mut self, cache_num: usize, beginning_cache: usize,
+                        cache_details: &Vec<i32>){
         let mut done = false;
         //checks if the address is already most recently used and if not moves it to the front.
         while done == false{
@@ -174,8 +188,9 @@ impl Cache {
                 let hit = "hit".to_string();
                 if self.cache_blocks[cache_num][1] == cache_details[0] &&
                     self.cache_blocks[cache_num][self.cache_blocks[cache_num].len() - 1] == 1 {
-                    self.total_hits += 1.0;                 // >>>>>>>>> Update of total_hits for write
-                    self.write_back_cache(cache_num, cache_details, mem_address, mem_reference, hit);
+                    self.total_hits += 1.0;              // >>>>>>>>> Update of total_hits for write
+                    self.write_back_cache(cache_num, cache_details, mem_address,
+                                          mem_reference, hit);
                     return;
                 } else {
                     if self.set_size - 1 > searches {
@@ -187,8 +202,10 @@ impl Cache {
                         //write miss
                         self.total_misses += 1.0;     // >>>>>>>> update of total_misses for write
                         let miss = "miss".to_string();
-                        mem_reference = self.write_allocate_cache(cache_num, searches, cache_details);
-                        self.write_back_cache(cache_num, &cache_details, mem_address, mem_reference, miss);
+                        mem_reference = self.write_allocate_cache(cache_num, searches,
+                                                                  cache_details);
+                        self.write_back_cache(cache_num, &cache_details, mem_address,
+                                              mem_reference, miss);
                         return;
                     }
                 }
@@ -210,7 +227,8 @@ impl Cache {
     ///
     /// returns the number of memory references.
     ///
-    fn write_allocate_cache(&mut self, cache_num: usize, searches: i32, cache_details: &Vec<i32>) -> i32 {
+    fn write_allocate_cache(&mut self, cache_num: usize, searches: i32,
+                            cache_details: &Vec<i32>) -> i32 {
         let mut mem_reference = 1;
         //checks for dirty bit, if 1 then it has to write it back to memory before replacing
         if self.cache_blocks[cache_num][2] == 1 {
@@ -249,15 +267,25 @@ impl Cache {
     /// mem_address - the memory address of the instruction
     /// mem_reference - the number of memory references
     ///
-    fn mem_to_cache(&mut self, cache_num: usize, cache_details: &Vec<i32>, mem_address: &String, mem_reference: i32) {
+    fn mem_to_cache(&mut self, cache_num: usize, cache_details: &Vec<i32>,
+                    mem_address: &String, mem_reference: i32) {
         self.cache_blocks[cache_num][1] = cache_details[0];
         //simulates populating the cache with the memory address
         for offset in 3..self.cache_blocks[cache_num].len() {
             self.cache_blocks[cache_num][offset] = 1;
         }
         write!(self.log_access, "{access}{}{}{}{}{miss_hit}{}\n",
-               mem_address.pad_to_width_with_alignment(9, Alignment::Right), cache_details[0 as usize].to_string().pad_to_width_with_alignment(8, Alignment::Right), cache_details[1 as usize].to_string().pad_to_width_with_alignment(6, Alignment::Right),
-               cache_details[2 as usize].to_string().pad_to_width_with_alignment(7, Alignment::Right), mem_reference.to_string().pad_to_width_with_alignment(8, Alignment::Right), access = "read".pad_to_width_with_alignment(6, Alignment::Right), miss_hit = "miss".pad_to_width_with_alignment(7, Alignment::Right))
+               mem_address.pad_to_width_with_alignment(9, Alignment::Right),
+               cache_details[0 as usize].to_string()
+                   .pad_to_width_with_alignment(8, Alignment::Right),
+               cache_details[1 as usize].to_string()
+                   .pad_to_width_with_alignment(6, Alignment::Right),
+               cache_details[2 as usize].to_string()
+                   .pad_to_width_with_alignment(7, Alignment::Right),
+               mem_reference.to_string()
+                   .pad_to_width_with_alignment(8, Alignment::Right),
+               access = "read".pad_to_width_with_alignment(6, Alignment::Right),
+               miss_hit = "miss".pad_to_width_with_alignment(7, Alignment::Right))
             .expect("Failure writing to string");
         return;
     }
@@ -272,14 +300,24 @@ impl Cache {
     /// mem_reference - the number of memory references
     /// hit_miss - the string of whether it was a hit or miss
     ///
-    fn write_back_cache(&mut self, cache_num: usize, cache_details: &Vec<i32>, mem_address: &String, mem_reference: i32, hit_miss: String) {
+    fn write_back_cache(&mut self, cache_num: usize, cache_details: &Vec<i32>,
+                        mem_address: &String, mem_reference: i32, hit_miss: String) {
         //simulates populating the cache with the memory address
         for offset in 2..self.cache_blocks[cache_num].len() {
             self.cache_blocks[cache_num][offset] = 1;
         }
         write!(self.log_access, "{access}{}{}{}{}{}{}\n",
-               mem_address.pad_to_width_with_alignment(9, Alignment::Right), cache_details[0 as usize].to_string().pad_to_width_with_alignment(8, Alignment::Right), cache_details[1 as usize].to_string().pad_to_width_with_alignment(6, Alignment::Right),
-               cache_details[2 as usize].to_string().pad_to_width_with_alignment(7, Alignment::Right), hit_miss.pad_to_width_with_alignment(7, Alignment::Right), mem_reference.to_string().pad_to_width_with_alignment(8, Alignment::Right), access = "write".pad_to_width_with_alignment(6, Alignment::Right))
+               mem_address.pad_to_width_with_alignment(9, Alignment::Right),
+               cache_details[0 as usize].to_string()
+                   .pad_to_width_with_alignment(8, Alignment::Right),
+               cache_details[1 as usize].to_string()
+                   .pad_to_width_with_alignment(6, Alignment::Right),
+               cache_details[2 as usize].to_string()
+                   .pad_to_width_with_alignment(7, Alignment::Right),
+               hit_miss.pad_to_width_with_alignment(7, Alignment::Right),
+               mem_reference.to_string()
+                   .pad_to_width_with_alignment(8, Alignment::Right),
+               access = "write".pad_to_width_with_alignment(6, Alignment::Right))
             .expect("Failure writing to string");
         return;
     }
@@ -340,11 +378,16 @@ impl Cache {
     pub fn summary(&self) -> String {
         let mut summary: String = String::new();
         let total_accesses: f64 = self.total_hits + self.total_misses;
-        write!(summary, "Simulation Summary Statistics\n").expect("Failure writing to string");
-        write!(summary, "-----------------------------\n").expect("Failure writing to string");
-        write!(summary, "{}", format_args!("Total hits       : {}\nTotal misses     : {}\nTotal accesses   : \
-            {}\nHit ratio        : {}\nMiss ratio       : {}", self.total_hits, self.total_misses, total_accesses,
-                                           self.total_hits / total_accesses, self.total_misses / total_accesses))
+        write!(summary, "Simulation Summary Statistics\n")
+            .expect("Failure writing to string");
+        write!(summary, "-----------------------------\n")
+            .expect("Failure writing to string");
+        write!(summary, "{}", format_args!("Total hits       : {}\nTotal misses     : \
+        {}\nTotal accesses   : \
+            {}\nHit ratio        : {}\nMiss ratio       : {}",
+                                           self.total_hits, self.total_misses, total_accesses,
+                                           self.total_hits / total_accesses, self.total_misses
+                                               / total_accesses))
             .expect("Failure writing to string");
         summary
     }
@@ -426,7 +469,8 @@ fn binary_to_decimal(cache_details: Vec<String>) -> Vec<i32> {
 /// * string - String passed in to be converted.
 ///
 fn hex_to_decimal(string: &String) -> i32 {
-    let returns = i64::from_str_radix(string, 16).expect("Unable to convert from hex to decimal");
+    let returns = i64::from_str_radix(string, 16)
+        .expect("Unable to convert from hex to decimal");
     returns as i32
 }
 
@@ -508,6 +552,7 @@ fn init_log(set_num: i32, set_size: i32, line_size: i32) -> String {
     write!(log_access, "Results for Each Reference\n\n")
         .expect("Failure writing to string");
     write!(log_access, "Access Address\t Tag\tIndex Offset Result Memrefs\n\
-        ------ -------- ------- ----- ------ ------ -------\n").expect("Failure writing to string");
+        ------ -------- ------- ----- ------ ------ -------\n")
+        .expect("Failure writing to string");
     log_access
 }

@@ -57,11 +57,16 @@ fn read_input_file() -> Vec<String> {
     //grabs the input file from the command line.
     let arguments: Vec<String> = env::args().collect();
     //checks if the amount of arguments is correct.
-    if arguments.len() != 3 {
-        println!("Usage: cargo run -- -f <input_file>");
+    let path;
+    if arguments.len() == 2 {
+        path = arguments.get(1).unwrap().to_string();
+    }else if arguments.len() == 3 {
+        path = arguments.get(2).unwrap().to_string();
+    }else{
+        println!("Usage: cargo run -- -f <input file> (if not compiled) or \
+        ./cache-simulator <input file> (if compiled)");
         exit(1);
     }
-    let path: String = arguments.get(2).unwrap().to_string();
     let file_contents = fs::read_to_string(&path);
     let file_contents = match file_contents {
         Ok(file_contents) => file_contents,
