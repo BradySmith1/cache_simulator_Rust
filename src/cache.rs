@@ -116,6 +116,11 @@ impl Cache {
                     } else {
                         self.total_misses += 1.0;    // >>>>>>> updates total misses for read
                         mem_reference += 1;
+                        //checks for dirty bit, if 1 then it has to write it back to memory before replacing
+                        if self.cache_blocks[cache_num][2] == 1 {
+                            mem_reference += 1;
+                            self.cache_blocks[cache_num][2] = 0;
+                        }
                         let beginning_cache = cache_num - (searches as usize);
                         self.shift_cache_down(cache_num, beginning_cache);
                         self.mem_to_cache(beginning_cache, &cache_details, mem_address

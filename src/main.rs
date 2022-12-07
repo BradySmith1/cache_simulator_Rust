@@ -6,6 +6,7 @@ use crate::cache::Cache;
 use std::env;
 use std::fs;
 use std::process::exit;
+
 /// File that runs the simulation of a cache.
 ///
 /// Author: Michael Imerman and Brady Smith
